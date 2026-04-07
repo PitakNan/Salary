@@ -549,12 +549,9 @@ function calculate() {
   let curYos    = yos0 + ((simMonth === 4 ? 4 : 10) - (today.getMonth() + 1)) / 12;
 
   const rows = [];
-  const salaryHistory = []; // for avg-60 pension calc
+  const monthlyHistory = []; // เก็บรายเดือน เพื่อเฉลี่ย 60 เดือนสุดท้าย
   let roundNo = 0;
   let appliedPromos = new Set();
-
-  // First row = current state (before any round)
-  salaryHistory.push(curSalary);
 
   while (curAge < retireAge - 0.001) {
     roundNo++;
@@ -605,7 +602,8 @@ function calculate() {
       promo: promoNote
     });
 
-    salaryHistory.push(newSalary);
+    // เก็บรายเดือน: แต่ละรอบ = 6 เดือน → push 6 ครั้ง
+    for (let m = 0; m < 6; m++) monthlyHistory.push(newSalary);
     curSalary = newSalary;
     curAge    = nextAge;
     curYos    = nextYos;
@@ -625,9 +623,9 @@ function calculate() {
   const yosFrac  = finalYos - yosFloor;
   const yosRounded = yosFrac > 0.5 ? yosFloor + 1 : yosFloor;
 
-  // Average of last 60 rounds
-  const last60 = salaryHistory.slice(-60);
-  const avg60  = last60.reduce((a, b) => a + b, 0) / last60.length;
+  // เฉลี่ยเงินเดือน 60 เดือนสุดท้าย (นับจากหลังมาหน้า)
+  const last60months = monthlyHistory.slice(-60);
+  const avg60 = last60months.reduce((a, b) => a + b, 0) / last60months.length;
 
   // Pension type
   const isPension = (finalYos >= 25) || (finalYos >= 10 && retireAge >= 50);
@@ -651,7 +649,7 @@ function calculate() {
   // ── Render ───────────────────────────────────────────────
   document.getElementById('resultSection').classList.add('visible');
   renderSummary(finalSalary, finalYos, yosRounded, isPension, pensionMonthly, severance);
-  renderPension(isPension, finalSalary, yosRounded, avg60, pensionPct, pensionMonthly, severance, bonusSeverance, last60.length);
+  renderPension(isPension, finalSalary, yosRounded, avg60, pensionPct, pensionMonthly, severance, bonusSeverance, last60months.length);
   renderTable(rows);
   renderChart(rows, salary0);
   window.scrollTo({ top: document.getElementById('resultSection').offsetTop - 20, behavior: 'smooth' });
