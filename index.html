@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบคำนวณเงินเดือนข้าราชการ & บำเหน็จ/บำนาญ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: #2d3748; font-size: 15px; }
+  h1 { background: linear-gradient(135deg, #1a365d, #2b6cb0); color: #fff; padding: 20px 28px; font-size: 22px; font-weight: 700; }
+  h1 span { font-size: 14px; font-weight: 400; opacity: 0.85; display: block; margin-top: 4px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 16px; font-weight: 700; color: #2b6cb0; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #ebf4ff; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
+  input, select { width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e0; border-radius: 6px; font-size: 14px; color: #2d3748; background: #f7fafc; transition: border-color 0.2s; }
+  input:focus, select:focus { outline: none; border-color: #3182ce; background: #fff; }
+  .input-group { margin-bottom: 4px; }
+  .hint { font-size: 11.5px; color: #718096; margin-top: 3px; }
+  .btn { background: linear-gradient(135deg, #2b6cb0, #3182ce); color: #fff; border: none; padding: 12px 32px; border-radius: 7px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .btn:hover { opacity: 0.9; }
+  .btn-reset { background: #e2e8f0; color: #4a5568; margin-left: 12px; }
+  .section-divider { height: 2px; background: linear-gradient(to right, #ebf4ff, #bee3f8, #ebf4ff); margin: 6px 0 16px; border: none; }
+  .promo-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: end; margin-bottom: 10px; }
+  .promo-row label { font-size: 13px; }
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .sum-card { border-radius: 9px; padding: 16px 14px; text-align: center; }
+  .sum-card .label { font-size: 12px; font-weight: 600; opacity: 0.85; margin-bottom: 6px; }
+  .sum-card .value { font-size: 22px; font-weight: 800; }
+  .sum-card .sub { font-size: 11.5px; opacity: 0.75; margin-top: 4px; }
+  .card-blue { background: linear-gradient(135deg, #2b6cb0, #3182ce); color: #fff; }
+  .card-green { background: linear-gradient(135deg, #276749, #38a169); color: #fff; }
+  .card-orange { background: linear-gradient(135deg, #c05621, #dd6b20); color: #fff; }
+  .card-purple { background: linear-gradient(135deg, #553c9a, #6b46c1); color: #fff; }
+  /* Table */
+  .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #2b6cb0; color: #fff; padding: 10px 12px; text-align: center; position: sticky; top: 0; white-space: nowrap; }
+  tbody tr:nth-child(even) { background: #f7fafc; }
+  tbody tr:hover { background: #ebf8ff; }
+  td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+  td.highlight { font-weight: 700; color: #2b6cb0; }
+  td.capped { color: #c05621; font-weight: 600; }
+  td.promoted { color: #276749; font-weight: 700; background: #f0fff4 !important; }
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .tag-promo { background: #c6f6d5; color: #276749; }
+  .tag-cap { background: #feebc8; color: #c05621; }
+  /* Pension section */
+  .pension-box { background: #f7fafc; border: 1.5px solid #bee3f8; border-radius: 9px; padding: 18px 20px; }
+  .pension-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+  .pension-row:last-child { border-bottom: none; }
+  .pension-row .p-label { font-size: 13.5px; color: #4a5568; }
+  .pension-row .p-value { font-size: 15px; font-weight: 700; color: #2b6cb0; }
+  .pension-type { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+  .type-pension { background: #c6f6d5; color: #22543d; }
+  .type-severance { background: #feebc8; color: #7b341e; }
+  .result-section { display: none; }
+  .result-section.visible { display: block; }
+  /* Chart */
+  canvas { max-width: 100%; }
+  .notice { background: #fffbeb; border: 1px solid #f6e05e; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; color: #744210; margin-bottom: 16px; }
+  @media (max-width: 700px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .promo-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<h1>🏛️ ระบบคำนวณเงินเดือนข้าราชการ
+  <span>คำนวณการเลื่อนเงินเดือนและประมาณการบำเหน็จ/บำนาญ</span>
+</h1>
+
+<div class="container">
+
+<!-- INPUT CARD -->
+<div class="card">
+  <h2>📝 กรอกข้อมูลส่วนตัว</h2>
+  <div class="grid3">
+    <div class="input-group">
+      <label>เงินเดือนปัจจุบัน (บาท)</label>
+      <input type="number" id="currentSalary" placeholder="เช่น 25430" min="7000">
+    </div>
+    <div class="input-group">
+      <label>อายุปัจจุบัน (ปี)</label>
+      <input type="number" id="currentAge" placeholder="เช่น 35" min="18" max="70">
+    </div>
+    <div class="input-group">
+      <label>อายุราชการปัจจุบัน (ปี)</label>
+      <input type="number" id="yearsOfService" placeholder="เช่น 8" min="0" max="40" step="0.5">
+      <div class="hint">ถ้ามีเศษเดือน ให้ปัดเป็นทศนิยม เช่น 8 ปี 6 เดือน = 8.5</div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="input-group">
+      <label>ระดับปัจจุบัน</label>
+      <select id="currentLevel">
+        <option value="">-- เลือกระดับ --</option>
+        <optgroup label="ประเภทวิชาการ">
+          <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+          <option value="ชำนาญการ">ชำนาญการ</option>
+          <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+          <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+          <option value="ทรงคุณวุฒิ">ทรงคุณวุฒิ</option>
+        </optgroup>
+        <optgroup label="ประเภททั่วไป">
+          <option value="ปฏิบัติงาน">ปฏิบัติงาน</option>
+          <option value="ชำนาญงาน">ชำนาญงาน</option>
+          <option value="อาวุโส">อาวุโส</option>
+          <option value="ทักษะพิเศษ">ทักษะพิเศษ</option>
+        </optgroup>
+        <optgroup label="ประเภทอำนวยการ">
+          <option value="อำนวยการต้น">อำนวยการต้น</option>
+          <option value="อำนวยการสูง">อำนวยการสูง</option>
+        </optgroup>
+        <optgroup label="ประเภทบริหาร">
+          <option value="บริหารต้น">บริหารต้น</option>
+          <option value="บริหารสูง">บริหารสูง</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>อายุที่คาดว่าจะเกษียณ (ปี)</label>
+      <input type="number" id="retirementAge" placeholder="เช่น 60" min="40" max="70" value="60">
+    </div>
+  </div>
+
+  <hr class="section-divider" style="margin-top:18px">
+  <h2 style="margin-bottom:14px">📈 แผนเลื่อนระดับ (ไม่บังคับ)</h2>
+
+  <div id="promoRows">
+    <div class="promo-row" id="promo1">
+      <div class="input-group">
+        <label>เลื่อนระดับครั้งที่ 1 เป็น</label>
+        <select class="promoLevel">
+          <option value="">-- ไม่มีการเลื่อน --</option>
+          <optgroup label="ประเภทวิชาการ">
+            <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+            <option value="ชำนาญการ">ชำนาญการ</option>
+            <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+            <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+            <option value="ทรงคุณวุฒิ">ทรงคุณวุฒิ</option>
+          </optgroup>
+          <optgroup label="ประเภททั่วไป">
+            <option value="ชำนาญงาน">ชำนาญงาน</option>
+            <option value="อาวุโส">อาวุโส</option>
+            <option value="ทักษะพิเศษ">ทักษะพิเศษ</option>
+          </optgroup>
+          <optgroup label="ประเภทอำนวยการ">
+            <option value="อำนวยการต้น">อำนวยการต้น</option>
+            <option value="อำนวยการสูง">อำนวยการสูง</option>
+          </optgroup>
+          <optgroup label="ประเภทบริหาร">
+            <option value="บริหารต้น">บริหารต้น</option>
+            <option value="บริหารสูง">บริหารสูง</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>เมื่ออายุ (ปี)</label>
+        <input type="number" class="promoAge" placeholder="เช่น 40" min="20" max="65">
+      </div>
+      <div class="input-group">
+        <label>เงินเดือน ณ เวลาเลื่อน (บาท)</label>
+        <input type="number" class="promoSalary" placeholder="ปล่อยว่าง=คำนวณให้">
+        <div class="hint">ถ้าไม่ใส่ จะใช้ยอดที่คำนวณไว้</div>
+      </div>
+    </div>
+    <div class="promo-row" id="promo2">
+      <div class="input-group">
+        <label>เลื่อนระดับครั้งที่ 2 เป็น</label>
+        <select class="promoLevel">
+          <option value="">-- ไม่มีการเลื่อน --</option>
+          <optgroup label="ประเภทวิชาการ">
+            <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+            <option value="ชำนาญการ">ชำนาญการ</option>
+            <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+            <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+            <option value="ทรงคุณวุฒิ">ทรงคุณวุฒิ</option>
+          </optgroup>
+          <optgroup label="ประเภททั่วไป">
+            <option value="ชำนาญงาน">ชำนาญงาน</option>
+            <option value="อาวุโส">อาวุโส</option>
+            <option value="ทักษะพิเศษ">ทักษะพิเศษ</option>
+          </optgroup>
+          <optgroup label="ประเภทอำนวยการ">
+            <option value="อำนวยการต้น">อำนวยการต้น</option>
+            <option value="อำนวยการสูง">อำนวยการสูง</option>
+          </optgroup>
+          <optgroup label="ประเภทบริหาร">
+            <option value="บริหารต้น">บริหารต้น</option>
+            <option value="บริหารสูง">บริหารสูง</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>เมื่ออายุ (ปี)</label>
+        <input type="number" class="promoAge" placeholder="เช่น 48" min="20" max="65">
+      </div>
+      <div class="input-group">
+        <label>เงินเดือน ณ เวลาเลื่อน (บาท)</label>
+        <input type="number" class="promoSalary" placeholder="ปล่อยว่าง=คำนวณให้">
+      </div>
+    </div>
+    <div class="promo-row" id="promo3">
+      <div class="input-group">
+        <label>เลื่อนระดับครั้งที่ 3 เป็น</label>
+        <select class="promoLevel">
+          <option value="">-- ไม่มีการเลื่อน --</option>
+          <optgroup label="ประเภทวิชาการ">
+            <option value="ปฏิบัติการ">ปฏิบัติการ</option>
+            <option value="ชำนาญการ">ชำนาญการ</option>
+            <option value="ชำนาญการพิเศษ">ชำนาญการพิเศษ</option>
+            <option value="เชี่ยวชาญ">เชี่ยวชาญ</option>
+            <option value="ทรงคุณวุฒิ">ทรงคุณวุฒิ</option>
+          </optgroup>
+          <optgroup label="ประเภททั่วไป">
+            <option value="ชำนาญงาน">ชำนาญงาน</option>
+            <option value="อาวุโส">อาวุโส</option>
+            <option value="ทักษะพิเศษ">ทักษะพิเศษ</option>
+          </optgroup>
+          <optgroup label="ประเภทอำนวยการ">
+            <option value="อำนวยการต้น">อำนวยการต้น</option>
+            <option value="อำนวยการสูง">อำนวยการสูง</option>
+          </optgroup>
+          <optgroup label="ประเภทบริหาร">
+            <option value="บริหารต้น">บริหารต้น</option>
+            <option value="บริหารสูง">บริหารสูง</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>เมื่ออายุ (ปี)</label>
+        <input type="number" class="promoAge" placeholder="เช่น 55" min="20" max="65">
+      </div>
+      <div class="input-group">
+        <label>เงินเดือน ณ เวลาเลื่อน (บาท)</label>
+        <input type="number" class="promoSalary" placeholder="ปล่อยว่าง=คำนวณให้">
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" style="margin-top:18px">
+  <h2 style="margin-bottom:14px">⚙️ ตั้งค่าการเลื่อนเงินเดือน</h2>
+  <div class="grid3">
+    <div class="input-group">
+      <label>เปอร์เซ็นต์เฉลี่ยที่ได้รับต่อรอบ (%)</label>
+      <input type="number" id="incrementPct" value="3.5" min="0.5" max="8" step="0.1">
+      <div class="hint">ค่าเฉลี่ยทั่วไปอยู่ที่ 3–4% ต่อรอบ (ปีละ 2 รอบ)</div>
+    </div>
+    <div class="input-group">
+      <label>วันที่เริ่มราชการ (ค.ศ.)</label>
+      <input type="number" id="startYear" placeholder="เช่น 2018" min="1990" max="2030">
+      <div class="hint">ใช้คำนวณปีงบประมาณ (ไม่บังคับ)</div>
+    </div>
+    <div class="input-group">
+      <label>เดือนที่เริ่มราชการ</label>
+      <select id="startMonth">
+        <option value="1">มกราคม</option>
+        <option value="2">กุมภาพันธ์</option>
+        <option value="3">มีนาคม</option>
+        <option value="4">เมษายน</option>
+        <option value="5">พฤษภาคม</option>
+        <option value="6">มิถุนายน</option>
+        <option value="7">กรกฎาคม</option>
+        <option value="8">สิงหาคม</option>
+        <option value="9">กันยายน</option>
+        <option value="10">ตุลาคม</option>
+        <option value="11">พฤศจิกายน</option>
+        <option value="12" selected>ธันวาคม</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-top:22px; text-align:center">
+    <button class="btn" onclick="calculate()">🔢 คำนวณ</button>
+    <button class="btn btn-reset" onclick="resetForm()">↺ รีเซ็ต</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultSection" class="result-section">
+
+  <div id="errorBox" class="notice" style="display:none"></div>
+
+  <!-- Summary -->
+  <div class="summary-grid" id="summaryCards"></div>
+
+  <!-- Chart -->
+  <div class="card">
+    <h2>📊 กราฟเงินเดือนตลอดอายุราชการ</h2>
+    <canvas id="salaryChart" height="80"></canvas>
+  </div>
+
+  <!-- Pension -->
+  <div class="card">
+    <h2>💰 ประมาณการบำเหน็จ / บำนาญ</h2>
+    <div id="pensionDetail"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <h2>📋 ตารางเงินเดือนรายรอบ</h2>
+    <div class="table-wrap">
+      <table id="salaryTable">
+        <thead>
+          <tr>
+            <th>รอบที่</th>
+            <th>วันที่</th>
+            <th>อายุ</th>
+            <th>อายุราชการ (ปี)</th>
+            <th>ระดับ</th>
+            <th>ฐาน (บาท)</th>
+            <th>% ที่ได้</th>
+            <th>เพิ่ม (บาท)</th>
+            <th>เงินเดือน (บาท)</th>
+            <th>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div><!-- end container -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ============================================================
+// SALARY CONFIGURATION DATA (from Excel file)
+// ============================================================
+const LEVEL_CONFIG = {
+  // ── ประเภทวิชาการ ──────────────────────────────────────
+  'ปฏิบัติการ': {
+    ranges: [
+      { threshold: 20950, base: 17980 },
+      { threshold: 26900, base: 23930 }
+    ],
+    minSalary: 7140,
+    maxSalary: 26900,
+    ceiling: 43600   // ceiling = max ของระดับถัดไป (ชำนาญการ)
+  },
+  'ชำนาญการ': {
+    ranges: [
+      { threshold: 29330, base: 24410 },
+      { threshold: 43600, base: 36470 }
+    ],
+    minSalary: 13160,
+    maxSalary: 43600,
+    ceiling: 58390   // ceiling = max ของระดับถัดไป (ชำนาญการพิเศษ)
+  },
+  'ชำนาญการพิเศษ': {
+    ranges: [
+      { threshold: 40270, base: 37200 },
+      { threshold: 58390, base: 49330 }
+    ],
+    minSalary: 19860,
+    maxSalary: 58390,
+    ceiling: 69040
+  },
+  'เชี่ยวชาญ': {
+    ranges: [
+      { threshold: 50320, base: 50320 },
+      { threshold: 69040, base: 59630 }
+    ],
+    minSalary: 24400,
+    maxSalary: 69040,
+    ceiling: 89290
+  },
+  'ทรงคุณวุฒิ': {
+    ranges: [
+      { threshold: 60000, base: 58920 },
+      { threshold: 89290, base: 73000 }
+    ],
+    minSalary: 28550,
+    maxSalary: 89290,
+    ceiling: 89290
+  },
+  // ── ประเภททั่วไป ───────────────────────────────────────
+  'ปฏิบัติงาน': {
+    ranges: [
+      { threshold: 10000, base: 9000 },
+      { threshold: 14150, base: 12000 }
+    ],
+    minSalary: 7100,
+    maxSalary: 14150,
+    ceiling: 30100
+  },
+  'ชำนาญงาน': {
+    ranges: [
+      { threshold: 17000, base: 15500 },
+      { threshold: 30100, base: 23000 }
+    ],
+    minSalary: 8500,
+    maxSalary: 30100,
+    ceiling: 45260
+  },
+  'อาวุโส': {
+    ranges: [
+      { threshold: 30000, base: 27000 },
+      { threshold: 45260, base: 37000 }
+    ],
+    minSalary: 18860,
+    maxSalary: 45260,
+    ceiling: 56060
+  },
+  'ทักษะพิเศษ': {
+    ranges: [
+      { threshold: 44000, base: 40000 },
+      { threshold: 56060, base: 49000 }
+    ],
+    minSalary: 32710,
+    maxSalary: 56060,
+    ceiling: 56060
+  },
+  // ── ประเภทอำนวยการ ─────────────────────────────────────
+  'อำนวยการต้น': {
+    ranges: [
+      { threshold: 60000, base: 56000 },
+      { threshold: 68150, base: 64000 }
+    ],
+    minSalary: 50550,
+    maxSalary: 68150,
+    ceiling: 79200
+  },
+  'อำนวยการสูง': {
+    ranges: [
+      { threshold: 70000, base: 65000 },
+      { threshold: 79200, base: 74000 }
+    ],
+    minSalary: 59350,
+    maxSalary: 79200,
+    ceiling: 89600
+  },
+  // ── ประเภทบริหาร ───────────────────────────────────────
+  'บริหารต้น': {
+    ranges: [
+      { threshold: 76000, base: 72000 },
+      { threshold: 89600, base: 83000 }
+    ],
+    minSalary: 63860,
+    maxSalary: 89600,
+    ceiling: 101590
+  },
+  'บริหารสูง': {
+    ranges: [
+      { threshold: 89000, base: 84000 },
+      { threshold: 101590, base: 96000 }
+    ],
+    minSalary: 75820,
+    maxSalary: 101590,
+    ceiling: 101590
+  }
+};
+
+function getBase(level, salary) {
+  const cfg = LEVEL_CONFIG[level];
+  if (!cfg) return salary;
+  for (const r of cfg.ranges) {
+    if (salary <= r.threshold) return r.base;
+  }
+  return cfg.ranges[cfg.ranges.length - 1].base;
+}
+
+function getCeiling(level) {
+  return LEVEL_CONFIG[level] ? LEVEL_CONFIG[level].ceiling : 999999;
+}
+
+function roundIncrement(val) {
+  // ปัดเป็นหลักสิบที่ใกล้ที่สุด
+  return Math.round(val / 10) * 10;
+}
+
+function fmt(n) {
+  return Number(n).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtDec(n, d=2) {
+  return Number(n).toLocaleString('th-TH', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+// ============================================================
+// MAIN CALCULATION
+// ============================================================
+let chartInstance = null;
+
+function calculate() {
+  const salary0    = parseFloat(document.getElementById('currentSalary').value);
+  const age0       = parseFloat(document.getElementById('currentAge').value);
+  const yos0       = parseFloat(document.getElementById('yearsOfService').value);
+  const level0     = document.getElementById('currentLevel').value;
+  const retireAge  = parseFloat(document.getElementById('retirementAge').value);
+  const pct        = parseFloat(document.getElementById('incrementPct').value) / 100;
+
+  // Validate
+  const errors = [];
+  if (!salary0 || salary0 < 1000) errors.push('กรุณาระบุเงินเดือนปัจจุบันที่ถูกต้อง');
+  if (!age0 || age0 < 18 || age0 > 70) errors.push('กรุณาระบุอายุปัจจุบัน (18–70 ปี)');
+  if (isNaN(yos0) || yos0 < 0) errors.push('กรุณาระบุอายุราชการ');
+  if (!level0) errors.push('กรุณาเลือกระดับปัจจุบัน');
+  if (!retireAge || retireAge <= age0) errors.push('อายุเกษียณต้องมากกว่าอายุปัจจุบัน');
+  if (isNaN(pct) || pct <= 0) errors.push('กรุณาระบุเปอร์เซ็นต์การเลื่อนเงินเดือน');
+
+  const errBox = document.getElementById('errorBox');
+  if (errors.length) {
+    errBox.innerHTML = '⚠️ ' + errors.join('<br>⚠️ ');
+    errBox.style.display = 'block';
+    document.getElementById('resultSection').classList.add('visible');
+    return;
+  }
+  errBox.style.display = 'none';
+
+  // Collect promotions
+  const promoLevels = Array.from(document.querySelectorAll('.promoLevel')).map(e => e.value);
+  const promoAges   = Array.from(document.querySelectorAll('.promoAge')).map(e => parseFloat(e.value));
+  const promoSals   = Array.from(document.querySelectorAll('.promoSalary')).map(e => parseFloat(e.value));
+
+  const promotions = [];
+  for (let i = 0; i < 3; i++) {
+    if (promoLevels[i] && !isNaN(promoAges[i]) && promoAges[i] > age0 && promoAges[i] < retireAge) {
+      promotions.push({
+        toLevel: promoLevels[i],
+        atAge: promoAges[i],
+        salary: isNaN(promoSals[i]) ? null : promoSals[i]
+      });
+    }
+  }
+  promotions.sort((a, b) => a.atAge - b.atAge);
+
+  // ── Simulate rounds ──────────────────────────────────────
+  // Rounds: Apr 1 and Oct 1 each year
+  // We simulate from current state
+  const startYear = parseInt(document.getElementById('startYear').value) || (new Date().getFullYear() - Math.floor(yos0));
+  const startMonth = parseInt(document.getElementById('startMonth').value) || 4;
+
+  // Figure out start date for simulation (next round from today)
+  const today = new Date(2026, 3, 7); // April 7, 2026 (from env)
+  let simYear  = today.getFullYear();
+  let simMonth = today.getMonth() < 3 ? 4 : (today.getMonth() < 9 ? 10 : 4); // next Apr or Oct
+  if (today.getMonth() >= 9) simYear++; // past October, go to next April
+
+  let curSalary = salary0;
+  let curLevel  = level0;
+  let curAge    = age0 + ((simMonth === 4 ? 4 : 10) - (today.getMonth() + 1)) / 12;
+  let curYos    = yos0 + ((simMonth === 4 ? 4 : 10) - (today.getMonth() + 1)) / 12;
+
+  const rows = [];
+  const salaryHistory = []; // for avg-60 pension calc
+  let roundNo = 0;
+  let appliedPromos = new Set();
+
+  // First row = current state (before any round)
+  salaryHistory.push(curSalary);
+
+  while (curAge < retireAge - 0.001) {
+    roundNo++;
+    const roundDate = `${simYear}-${simMonth === 4 ? '04' : '10'}-01`;
+    const roundAgeStr = fmtDec(curAge + 0.5, 1);
+
+    // Advance age and yos by 0.5 year (one round = 6 months)
+    let nextAge = curAge + 0.5;
+    let nextYos = curYos + 0.5;
+    const roundYear = simYear;
+
+    // Check for promotion at this age
+    let promoNote = '';
+    for (let pi = 0; pi < promotions.length; pi++) {
+      const promo = promotions[pi];
+      if (!appliedPromos.has(pi) && nextAge >= promo.atAge) {
+        appliedPromos.add(pi);
+        curLevel = promo.toLevel;
+        if (promo.salary) curSalary = promo.salary;
+        promoNote = `⬆ ${promo.toLevel}`;
+      }
+    }
+
+    const ceiling = getCeiling(curLevel);
+    const base    = getBase(curLevel, curSalary);
+    const incRaw  = base * pct;
+    const inc     = roundIncrement(incRaw);
+
+    let newSalary = curSalary + inc;
+    let capped = false;
+    if (newSalary > ceiling) {
+      newSalary = ceiling;
+      capped = true;
+    }
+    const actualInc = newSalary - curSalary;
+
+    rows.push({
+      no: roundNo,
+      date: roundDate,
+      age: fmtDec(curAge, 1),
+      yos: fmtDec(curYos, 2),
+      level: curLevel,
+      base: base,
+      pct: pct * 100,
+      inc: actualInc,
+      salary: newSalary,
+      capped: capped,
+      promo: promoNote
+    });
+
+    salaryHistory.push(newSalary);
+    curSalary = newSalary;
+    curAge    = nextAge;
+    curYos    = nextYos;
+
+    // Advance round date
+    if (simMonth === 4) { simMonth = 10; }
+    else { simMonth = 4; simYear++; }
+
+    if (curAge >= retireAge) break;
+  }
+
+  const finalSalary = curSalary;
+  const finalYos    = curYos;
+
+  // Round years of service (>6 months = +1 year)
+  const yosFloor = Math.floor(finalYos);
+  const yosFrac  = finalYos - yosFloor;
+  const yosRounded = yosFrac > 0.5 ? yosFloor + 1 : yosFloor;
+
+  // Average of last 60 rounds
+  const last60 = salaryHistory.slice(-60);
+  const avg60  = last60.reduce((a, b) => a + b, 0) / last60.length;
+
+  // Pension type
+  const isPension = (finalYos >= 25) || (finalYos >= 10 && retireAge >= 50);
+  const finalAge  = retireAge;
+
+  // Pension calculation
+  let pensionPct, pensionMonthly, severance;
+  if (isPension) {
+    pensionPct = Math.min(yosRounded / 50, 0.70);
+    pensionMonthly = avg60 * pensionPct;
+    severance = null;
+  } else {
+    pensionPct = null;
+    pensionMonthly = null;
+    severance = finalSalary * yosRounded;
+  }
+
+  // บำเหน็จดำรงชีพ (bonus severance = 30x monthly pension, max 15M) for pension recipients
+  const bonusSeverance = isPension ? pensionMonthly * 30 : null;
+
+  // ── Render ───────────────────────────────────────────────
+  document.getElementById('resultSection').classList.add('visible');
+  renderSummary(finalSalary, finalYos, yosRounded, isPension, pensionMonthly, severance);
+  renderPension(isPension, finalSalary, yosRounded, avg60, pensionPct, pensionMonthly, severance, bonusSeverance, last60.length);
+  renderTable(rows);
+  renderChart(rows, salary0);
+  window.scrollTo({ top: document.getElementById('resultSection').offsetTop - 20, behavior: 'smooth' });
+}
+
+function renderSummary(finalSalary, finalYos, yosR, isPension, pm, sev) {
+  const container = document.getElementById('summaryCards');
+  const items = [
+    { label: 'เงินเดือนสุดท้าย', value: fmt(finalSalary) + ' บาท', sub: 'ณ วันเกษียณ', cls: 'card-blue' },
+    { label: 'อายุราชการรวม', value: fmtDec(finalYos, 1) + ' ปี', sub: `นับปัด = ${yosR} ปี`, cls: 'card-purple' },
+    isPension
+      ? { label: 'บำนาญ/เดือน', value: fmt(Math.round(pm)) + ' บาท', sub: 'ตลอดชีวิต', cls: 'card-green' }
+      : { label: 'บำเหน็จ', value: fmt(Math.round(sev)) + ' บาท', sub: 'ครั้งเดียว', cls: 'card-orange' },
+    isPension
+      ? { label: 'บำเหน็จดำรงชีพ', value: fmt(Math.round(pm * 30)) + ' บาท', sub: '30 เท่าของบำนาญ', cls: 'card-orange' }
+      : { label: 'ประเภท', value: 'บำเหน็จ', sub: 'อายุราชการ < 25 ปี', cls: 'card-orange' }
+  ];
+  container.innerHTML = items.map(it =>
+    `<div class="sum-card ${it.cls}">
+      <div class="label">${it.label}</div>
+      <div class="value">${it.value}</div>
+      <div class="sub">${it.sub}</div>
+    </div>`
+  ).join('');
+}
+
+function renderPension(isPension, lastSal, yosR, avg60, pct, pm, sev, bonus, histLen) {
+  const box = document.getElementById('pensionDetail');
+  const typeTag = isPension
+    ? '<span class="pension-type type-pension">✅ ได้รับ บำนาญ</span>'
+    : '<span class="pension-type type-severance">💛 ได้รับ บำเหน็จ</span>';
+
+  let detail = '';
+  if (isPension) {
+    const pctCapped = pct >= 0.70;
+    detail = `
+      <div class="pension-box">
+        ${typeTag}
+        <div class="pension-row"><span class="p-label">เงินเดือนเฉลี่ย ${histLen} งวดสุดท้าย</span><span class="p-value">${fmt(Math.round(avg60))} บาท</span></div>
+        <div class="pension-row"><span class="p-label">อายุราชการ (ปัดแล้ว)</span><span class="p-value">${yosR} ปี</span></div>
+        <div class="pension-row"><span class="p-label">เปอร์เซ็นต์บำนาญ (= อายุราชการ ÷ 50)</span><span class="p-value">${fmtDec(pct*100,2)}% ${pctCapped ? '<span style="color:#c05621;font-size:12px">(ถูกจำกัดที่ 70%)</span>':''}</span></div>
+        <div class="pension-row" style="background:#f0fff4;border-radius:6px;padding:10px 12px;margin-top:6px"><span class="p-label" style="font-weight:700;color:#22543d">💰 บำนาญต่อเดือน</span><span class="p-value" style="font-size:20px;color:#22543d">${fmt(Math.round(pm))} บาท</span></div>
+        <div class="pension-row"><span class="p-label">บำเหน็จดำรงชีพ (30 × บำนาญ)</span><span class="p-value">${fmt(Math.round(bonus))} บาท</span></div>
+        <div style="margin-top:12px;font-size:12px;color:#718096">
+          สูตร: เงินเดือนเฉลี่ย 60 งวด × อายุราชการ ÷ 50 (ไม่เกิน 70%)
+        </div>
+      </div>`;
+  } else {
+    detail = `
+      <div class="pension-box">
+        ${typeTag}
+        <div class="pension-row"><span class="p-label">เงินเดือนเดือนสุดท้าย</span><span class="p-value">${fmt(lastSal)} บาท</span></div>
+        <div class="pension-row"><span class="p-label">อายุราชการ (ปัดแล้ว)</span><span class="p-value">${yosR} ปี</span></div>
+        <div class="pension-row" style="background:#fffbeb;border-radius:6px;padding:10px 12px;margin-top:6px"><span class="p-label" style="font-weight:700;color:#7b341e">💛 บำเหน็จรวม</span><span class="p-value" style="font-size:20px;color:#c05621">${fmt(Math.round(sev))} บาท</span></div>
+        <div style="margin-top:12px;font-size:12px;color:#718096">
+          สูตร: เงินเดือนสุดท้าย × อายุราชการ (เศษเกิน 6 เดือน นับเป็น 1 ปี)
+        </div>
+      </div>`;
+  }
+  box.innerHTML = detail;
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = rows.map(r => {
+    const rowClass = r.promo ? 'promoted' : (r.capped ? '' : '');
+    const statusCell = r.promo
+      ? `<td class="promoted"><span class="tag tag-promo">${r.promo}</span></td>`
+      : (r.capped ? `<td class="capped"><span class="tag tag-cap">⚠ ตัน</span></td>` : '<td>—</td>');
+    return `<tr class="${rowClass}">
+      <td>${r.no}</td>
+      <td>${r.date}</td>
+      <td>${r.age}</td>
+      <td>${r.yos}</td>
+      <td>${r.level}</td>
+      <td class="highlight">${fmt(r.base)}</td>
+      <td>${fmtDec(r.pct, 2)}%</td>
+      <td>${r.inc > 0 ? '+' + fmt(r.inc) : '0'}</td>
+      <td class="highlight">${fmt(r.salary)}</td>
+      ${statusCell}
+    </tr>`;
+  }).join('');
+}
+
+function renderChart(rows, startSalary) {
+  const labels = rows.map(r => r.date.substring(0, 7));
+  const data   = rows.map(r => r.salary);
+
+  const ctx = document.getElementById('salaryChart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'เงินเดือน (บาท)',
+        data,
+        borderColor: '#3182ce',
+        backgroundColor: 'rgba(49,130,206,0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: rows.length > 60 ? 0 : 3,
+        pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' ' + fmt(ctx.parsed.y) + ' บาท'
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12, font: { size: 11 } } },
+        y: {
+          ticks: {
+            callback: v => fmt(v),
+            font: { size: 11 }
+          }
+        }
+      }
+    }
+  });
+}
+
+function resetForm() {
+  document.querySelectorAll('input[type=number]').forEach(el => {
+    if (el.id === 'incrementPct') el.value = '3.5';
+    else if (el.id === 'retirementAge') el.value = '60';
+    else el.value = '';
+  });
+  document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  document.getElementById('startMonth').value = '12';
+  document.getElementById('resultSection').classList.remove('visible');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+}
+</script>
+</body>
+</html>
