@@ -70,6 +70,23 @@
   /* Chart */
   canvas { max-width: 100%; }
   .notice { background: #fffbeb; border: 1px solid #f6e05e; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; color: #744210; margin-bottom: 16px; }
+  /* Date inputs */
+  input[type=date] { width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e0; border-radius: 6px; font-size: 14px; color: #2d3748; background: #f7fafc; cursor: pointer; }
+  input[type=date]:focus { outline: none; border-color: #3182ce; background: #fff; }
+  /* Floating feedback button */
+  .fab { position: fixed; bottom: 28px; right: 28px; background: linear-gradient(135deg, #553c9a,#6b46c1); color:#fff; border:none; border-radius:50px; padding:13px 22px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(107,70,193,0.4); z-index:100; transition:transform 0.2s; }
+  .fab:hover { transform: scale(1.06); }
+  /* Modal */
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#fff; border-radius:12px; padding:28px; width:min(480px,92vw); max-height:90vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,0.25); }
+  .modal h3 { font-size:17px; font-weight:700; color:#2b6cb0; margin-bottom:16px; }
+  .modal textarea { width:100%; padding:10px 12px; border:1.5px solid #cbd5e0; border-radius:6px; font-size:14px; resize:vertical; min-height:100px; }
+  .modal textarea:focus { outline:none; border-color:#3182ce; }
+  .modal-btn { background:linear-gradient(135deg,#553c9a,#6b46c1); color:#fff; border:none; padding:10px 26px; border-radius:7px; font-size:14px; font-weight:700; cursor:pointer; margin-top:12px; }
+  .modal-btn-close { background:#e2e8f0; color:#4a5568; margin-left:10px; }
+  .fb-item { background:#f7fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; margin-bottom:10px; font-size:13px; }
+  .fb-item .fb-meta { font-size:11.5px; color:#718096; margin-top:5px; }
   @media (max-width: 900px) {
     .summary-grid { grid-template-columns: repeat(3, 1fr); }
     .gpf-grid { grid-template-columns: 1fr 1fr; }
@@ -97,13 +114,14 @@
       <input type="number" id="currentSalary" placeholder="เช่น 25430" min="7000">
     </div>
     <div class="input-group">
-      <label>อายุปัจจุบัน (ปี)</label>
-      <input type="number" id="currentAge" placeholder="เช่น 35" min="18" max="70">
+      <label>วัน/เดือน/ปี เกิด</label>
+      <input type="date" id="birthDate" max="2008-12-31">
+      <div class="hint" id="ageDisplay">ระบบจะคำนวณอายุให้อัตโนมัติ</div>
     </div>
     <div class="input-group">
-      <label>อายุราชการปัจจุบัน (ปี)</label>
-      <input type="number" id="yearsOfService" placeholder="เช่น 8" min="0" max="40" step="0.5">
-      <div class="hint">ถ้ามีเศษเดือน ให้ปัดเป็นทศนิยม เช่น 8 ปี 6 เดือน = 8.5</div>
+      <label>วัน/เดือน/ปี ที่บรรจุ</label>
+      <input type="date" id="appointmentDate" max="2026-04-07">
+      <div class="hint" id="yosDisplay">ระบบจะคำนวณอายุราชการให้อัตโนมัติ</div>
     </div>
   </div>
   <div class="grid2" style="margin-top:14px">
@@ -257,33 +275,16 @@
 
   <hr class="section-divider" style="margin-top:18px">
   <h2 style="margin-bottom:14px">⚙️ ตั้งค่าการเลื่อนเงินเดือน</h2>
-  <div class="grid3">
+  <div class="grid2" style="max-width:500px">
     <div class="input-group">
       <label>เปอร์เซ็นต์เฉลี่ยที่ได้รับต่อรอบ (%)</label>
-      <input type="number" id="incrementPct" value="3.5" min="0.5" max="8" step="0.1">
+      <input type="number" id="incrementPct" value="3.0" min="0.5" max="8" step="0.1">
       <div class="hint">ค่าเฉลี่ยทั่วไปอยู่ที่ 3–4% ต่อรอบ (ปีละ 2 รอบ)</div>
     </div>
     <div class="input-group">
-      <label>วันที่เริ่มราชการ (ค.ศ.)</label>
-      <input type="number" id="startYear" placeholder="เช่น 2018" min="1990" max="2030">
-      <div class="hint">ใช้คำนวณปีงบประมาณ (ไม่บังคับ)</div>
-    </div>
-    <div class="input-group">
-      <label>เดือนที่เริ่มราชการ</label>
-      <select id="startMonth">
-        <option value="1">มกราคม</option>
-        <option value="2">กุมภาพันธ์</option>
-        <option value="3">มีนาคม</option>
-        <option value="4">เมษายน</option>
-        <option value="5">พฤษภาคม</option>
-        <option value="6">มิถุนายน</option>
-        <option value="7">กรกฎาคม</option>
-        <option value="8">สิงหาคม</option>
-        <option value="9">กันยายน</option>
-        <option value="10">ตุลาคม</option>
-        <option value="11">พฤศจิกายน</option>
-        <option value="12" selected>ธันวาคม</option>
-      </select>
+      <label>ผลตอบแทนการลงทุน กบข. (% ต่อปี)</label>
+      <input type="number" id="gpfReturn" placeholder="เช่น 3" min="0" max="15" step="0.1">
+      <div class="hint">ผลตอบแทนเฉลี่ยย้อนหลัง กบข. ประมาณ 2–5% ต่อปี</div>
     </div>
   </div>
 
@@ -307,16 +308,11 @@
       <div class="hint">ส่วนชดเชยที่รัฐบาลจ่ายให้ 2% ของเงินเดือน</div>
     </div>
   </div>
-  <div class="grid3">
+  <div style="max-width:340px">
     <div class="input-group">
       <label>เงินออมเพิ่ม (%) ต่อเดือน</label>
       <input type="number" id="gpfExtra" placeholder="เช่น 5" min="0" max="27" step="0.5" value="0">
       <div class="hint">ออมเพิ่มได้สูงสุด 27% ของเงินเดือน (ไม่บังคับ)</div>
-    </div>
-    <div class="input-group">
-      <label>ผลตอบแทนการลงทุน กบข. (% ต่อปี)</label>
-      <input type="number" id="gpfReturn" placeholder="เช่น 3" min="0" max="15" step="0.1" value="3">
-      <div class="hint">ผลตอบแทนเฉลี่ยย้อนหลัง กบข. ประมาณ 2–5% ต่อปี</div>
     </div>
   </div>
 
@@ -378,6 +374,46 @@
 
 </div>
 </div><!-- end container -->
+
+<!-- Floating feedback button -->
+<button class="fab" onclick="document.getElementById('feedbackModal').classList.add('open')">💬 แสดงความคิดเห็น</button>
+
+<!-- Feedback Modal -->
+<div class="modal-bg" id="feedbackModal">
+  <div class="modal">
+    <h3>💬 แสดงความคิดเห็นต่อโปรแกรม</h3>
+    <div class="input-group" style="margin-bottom:12px">
+      <label>ชื่อ (ไม่บังคับ)</label>
+      <input type="text" id="fbName" placeholder="เช่น นายสมชาย ใจดี" style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:14px">
+    </div>
+    <div class="input-group">
+      <label>ความคิดเห็น / ข้อเสนอแนะ</label>
+      <textarea id="fbText" placeholder="พิมพ์ความคิดเห็นที่นี่..."></textarea>
+    </div>
+    <div style="font-size:12px;color:#718096;margin-top:8px">
+      ⏰ วันเวลาและข้อมูลในแบบฟอร์มจะถูกบันทึกอัตโนมัติ
+    </div>
+    <div>
+      <button class="modal-btn" onclick="submitFeedback()">📨 ส่งความคิดเห็น</button>
+      <button class="modal-btn modal-btn-close" onclick="document.getElementById('feedbackModal').classList.remove('open')">✕ ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal" style="width:min(680px,95vw)">
+    <h3>🔐 ดูความคิดเห็นทั้งหมด</h3>
+    <div id="adminContent">
+      <div class="input-group" style="margin-bottom:12px">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="adminPass" placeholder="กรอกรหัสผ่าน" onkeydown="if(event.key==='Enter')verifyAdmin()" style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:14px">
+      </div>
+      <button class="modal-btn" onclick="verifyAdmin()">🔓 เข้าสู่ระบบ</button>
+      <button class="modal-btn modal-btn-close" onclick="document.getElementById('adminModal').classList.remove('open')">✕ ปิด</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
@@ -535,17 +571,52 @@ function fmtDec(n, d=2) {
 }
 
 // ============================================================
+// DATE HELPERS
+// ============================================================
+const TODAY = new Date(2026, 3, 7); // April 7, 2026
+
+function calcYearsFromDate(dateStr) {
+  if (!dateStr) return NaN;
+  const d = new Date(dateStr);
+  let years = TODAY.getFullYear() - d.getFullYear();
+  const m = TODAY.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && TODAY.getDate() < d.getDate())) years--;
+  const msPerYear = 365.25 * 24 * 3600 * 1000;
+  return (TODAY - d) / msPerYear;
+}
+
+function formatYears(y) {
+  const yr = Math.floor(y);
+  const mo = Math.round((y - yr) * 12);
+  return mo > 0 ? `${yr} ปี ${mo} เดือน` : `${yr} ปี`;
+}
+
+// Live display when dates change
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('birthDate').addEventListener('change', function() {
+    const y = calcYearsFromDate(this.value);
+    document.getElementById('ageDisplay').textContent = isNaN(y) ? 'ระบบจะคำนวณอายุให้อัตโนมัติ' : `อายุปัจจุบัน: ${formatYears(y)}`;
+  });
+  document.getElementById('appointmentDate').addEventListener('change', function() {
+    const y = calcYearsFromDate(this.value);
+    document.getElementById('yosDisplay').textContent = isNaN(y) ? 'ระบบจะคำนวณอายุราชการให้อัตโนมัติ' : `อายุราชการ: ${formatYears(y)}`;
+  });
+});
+
+// ============================================================
 // MAIN CALCULATION
 // ============================================================
 let chartInstance = null;
 
 function calculate() {
-  const salary0    = parseFloat(document.getElementById('currentSalary').value);
-  const age0       = parseFloat(document.getElementById('currentAge').value);
-  const yos0       = parseFloat(document.getElementById('yearsOfService').value);
-  const level0     = document.getElementById('currentLevel').value;
-  const retireAge  = parseFloat(document.getElementById('retirementAge').value);
-  const pct        = parseFloat(document.getElementById('incrementPct').value) / 100;
+  const salary0       = parseFloat(document.getElementById('currentSalary').value);
+  const birthDateStr  = document.getElementById('birthDate').value;
+  const apptDateStr   = document.getElementById('appointmentDate').value;
+  const age0          = calcYearsFromDate(birthDateStr);
+  const yos0          = calcYearsFromDate(apptDateStr);
+  const level0        = document.getElementById('currentLevel').value;
+  const retireAge     = parseFloat(document.getElementById('retirementAge').value);
+  const pct           = parseFloat(document.getElementById('incrementPct').value) / 100;
 
   // GPF inputs
   const gpfTon0          = parseFloat(document.getElementById('gpfTon').value)     || 0;
@@ -558,8 +629,10 @@ function calculate() {
   // Validate
   const errors = [];
   if (!salary0 || salary0 < 1000) errors.push('กรุณาระบุเงินเดือนปัจจุบันที่ถูกต้อง');
-  if (!age0 || age0 < 18 || age0 > 70) errors.push('กรุณาระบุอายุปัจจุบัน (18–70 ปี)');
-  if (isNaN(yos0) || yos0 < 0) errors.push('กรุณาระบุอายุราชการ');
+  if (!birthDateStr)  errors.push('กรุณาระบุวันเกิด');
+  else if (isNaN(age0) || age0 < 18 || age0 > 70) errors.push('วันเกิดไม่ถูกต้อง (อายุต้องอยู่ระหว่าง 18–70 ปี)');
+  if (!apptDateStr)   errors.push('กรุณาระบุวันที่บรรจุ');
+  else if (isNaN(yos0) || yos0 < 0) errors.push('วันที่บรรจุไม่ถูกต้อง');
   if (!level0) errors.push('กรุณาเลือกระดับปัจจุบัน');
   if (!retireAge || retireAge <= age0) errors.push('อายุเกษียณต้องมากกว่าอายุปัจจุบัน');
   if (isNaN(pct) || pct <= 0) errors.push('กรุณาระบุเปอร์เซ็นต์การเลื่อนเงินเดือน');
@@ -591,21 +664,15 @@ function calculate() {
   promotions.sort((a, b) => a.atAge - b.atAge);
 
   // ── Simulate rounds ──────────────────────────────────────
-  // Rounds: Apr 1 and Oct 1 each year
-  // We simulate from current state
-  const startYear = parseInt(document.getElementById('startYear').value) || (new Date().getFullYear() - Math.floor(yos0));
-  const startMonth = parseInt(document.getElementById('startMonth').value) || 4;
-
-  // Figure out start date for simulation (next round from today)
-  const today = new Date(2026, 3, 7); // April 7, 2026 (from env)
-  let simYear  = today.getFullYear();
-  let simMonth = today.getMonth() < 3 ? 4 : (today.getMonth() < 9 ? 10 : 4); // next Apr or Oct
-  if (today.getMonth() >= 9) simYear++; // past October, go to next April
+  // Rounds: Apr 1 and Oct 1 each year — start from next round after today
+  let simYear  = TODAY.getFullYear();
+  let simMonth = TODAY.getMonth() < 3 ? 4 : (TODAY.getMonth() < 9 ? 10 : 4);
+  if (TODAY.getMonth() >= 9) simYear++;
 
   let curSalary = salary0;
   let curLevel  = level0;
-  let curAge    = age0 + ((simMonth === 4 ? 4 : 10) - (today.getMonth() + 1)) / 12;
-  let curYos    = yos0 + ((simMonth === 4 ? 4 : 10) - (today.getMonth() + 1)) / 12;
+  let curAge    = age0 + ((simMonth === 4 ? 4 : 10) - (TODAY.getMonth() + 1)) / 12;
+  let curYos    = yos0 + ((simMonth === 4 ? 4 : 10) - (TODAY.getMonth() + 1)) / 12;
 
   const rows = [];
   const monthlyHistory = []; // เก็บรายเดือน เพื่อเฉลี่ย 60 เดือนสุดท้าย
@@ -909,16 +976,93 @@ function renderChart(rows, startSalary) {
 }
 
 function resetForm() {
-  const defaults = { incrementPct: '3.5', retirementAge: '60', gpfReturn: '3',
+  const defaults = { incrementPct: '3.5', retirementAge: '60',
                      gpfTon: '0', gpfSomtop: '0', gpfChomdee: '0', gpfExtra: '0' };
   document.querySelectorAll('input[type=number]').forEach(el => {
     el.value = defaults[el.id] !== undefined ? defaults[el.id] : '';
   });
+  document.querySelectorAll('input[type=date]').forEach(el => el.value = '');
+  document.getElementById('gpfReturn').value = '';
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
-  document.getElementById('startMonth').value = '12';
+  document.getElementById('ageDisplay').textContent = 'ระบบจะคำนวณอายุให้อัตโนมัติ';
+  document.getElementById('yosDisplay').textContent = 'ระบบจะคำนวณอายุราชการให้อัตโนมัติ';
   document.getElementById('resultSection').classList.remove('visible');
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 }
+
+// ============================================================
+// FEEDBACK SYSTEM
+// ============================================================
+function submitFeedback() {
+  const text = document.getElementById('fbText').value.trim();
+  if (!text) { alert('กรุณาพิมพ์ความคิดเห็นก่อนส่ง'); return; }
+
+  const name    = document.getElementById('fbName').value.trim() || 'ไม่ระบุ';
+  const salary  = document.getElementById('currentSalary').value || '-';
+  const level   = document.getElementById('currentLevel').value  || '-';
+  const birth   = document.getElementById('birthDate').value     || '-';
+  const appt    = document.getElementById('appointmentDate').value || '-';
+
+  const now = new Date();
+  const ts  = now.toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' });
+
+  const entry = { name, salary, level, birth, appt, text, ts };
+  const stored = JSON.parse(localStorage.getItem('govSalaryFeedback') || '[]');
+  stored.unshift(entry);
+  localStorage.setItem('govSalaryFeedback', JSON.stringify(stored));
+
+  document.getElementById('fbText').value = '';
+  document.getElementById('fbName').value = '';
+  document.getElementById('feedbackModal').classList.remove('open');
+  alert('✅ ขอบคุณสำหรับความคิดเห็นของท่าน');
+}
+
+function verifyAdmin() {
+  const pass = document.getElementById('adminPass').value;
+  if (pass !== '0867291841') { alert('รหัสผ่านไม่ถูกต้อง'); return; }
+  showFeedbackList();
+}
+
+function showFeedbackList() {
+  const stored = JSON.parse(localStorage.getItem('govSalaryFeedback') || '[]');
+  const content = document.getElementById('adminContent');
+  if (stored.length === 0) {
+    content.innerHTML = '<p style="color:#718096">ยังไม่มีความคิดเห็น</p>' +
+      '<button class="modal-btn modal-btn-close" onclick="document.getElementById(\'adminModal\').classList.remove(\'open\')">✕ ปิด</button>';
+    return;
+  }
+  const items = stored.map((e, i) => `
+    <div class="fb-item">
+      <strong>${e.name}</strong> — ${e.text}
+      <div class="fb-meta">
+        ⏰ ${e.ts} &nbsp;|&nbsp; เงินเดือน: ${e.salary} บ. &nbsp;|&nbsp; ระดับ: ${e.level}
+        &nbsp;|&nbsp; เกิด: ${e.birth} &nbsp;|&nbsp; บรรจุ: ${e.appt}
+      </div>
+    </div>`).join('');
+  content.innerHTML = `
+    <div style="margin-bottom:10px;font-size:13px;color:#4a5568">ความคิดเห็นทั้งหมด <strong>${stored.length}</strong> รายการ</div>
+    <div style="max-height:420px;overflow-y:auto">${items}</div>
+    <div style="margin-top:14px">
+      <button class="modal-btn" style="background:linear-gradient(135deg,#c05621,#dd6b20)" onclick="clearFeedback()">🗑 ลบทั้งหมด</button>
+      <button class="modal-btn modal-btn-close" onclick="document.getElementById('adminModal').classList.remove('open')">✕ ปิด</button>
+    </div>`;
+}
+
+function clearFeedback() {
+  if (!confirm('ยืนยันลบความคิดเห็นทั้งหมด?')) return;
+  localStorage.removeItem('govSalaryFeedback');
+  showFeedbackList();
+}
+
+// Secret admin shortcut: triple-click on h1
+document.addEventListener('DOMContentLoaded', () => {
+  let clicks = 0;
+  document.querySelector('h1').addEventListener('click', () => {
+    clicks++;
+    if (clicks >= 3) { clicks = 0; document.getElementById('adminModal').classList.add('open'); }
+    setTimeout(() => clicks = 0, 1000);
+  });
+});
 </script>
 </body>
 </html>
