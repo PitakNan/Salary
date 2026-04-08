@@ -26,7 +26,14 @@
   .promo-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: end; margin-bottom: 10px; }
   .promo-row label { font-size: 13px; }
   /* Summary cards */
-  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+  .gpf-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
+  .gpf-part { background: #f0fdfa; border: 1.5px solid #81e6d9; border-radius: 8px; padding: 12px 14px; text-align: center; }
+  .gpf-part .gp-label { font-size: 12px; font-weight: 600; color: #2c7a7b; margin-bottom: 4px; }
+  .gpf-part .gp-value { font-size: 17px; font-weight: 800; color: #234e52; }
+  .gpf-total-box { background: linear-gradient(135deg, #234e52, #2c7a7b); color: #fff; border-radius: 9px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .gpf-total-box .gt-label { font-size: 14px; font-weight: 700; }
+  .gpf-total-box .gt-value { font-size: 26px; font-weight: 900; }
   .sum-card { border-radius: 9px; padding: 16px 14px; text-align: center; }
   .sum-card .label { font-size: 12px; font-weight: 600; opacity: 0.85; margin-bottom: 6px; }
   .sum-card .value { font-size: 22px; font-weight: 800; }
@@ -35,6 +42,7 @@
   .card-green { background: linear-gradient(135deg, #276749, #38a169); color: #fff; }
   .card-orange { background: linear-gradient(135deg, #c05621, #dd6b20); color: #fff; }
   .card-purple { background: linear-gradient(135deg, #553c9a, #6b46c1); color: #fff; }
+  .card-teal { background: linear-gradient(135deg, #234e52, #2c7a7b); color: #fff; }
   /* Table */
   .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -62,6 +70,10 @@
   /* Chart */
   canvas { max-width: 100%; }
   .notice { background: #fffbeb; border: 1px solid #f6e05e; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; color: #744210; margin-bottom: 16px; }
+  @media (max-width: 900px) {
+    .summary-grid { grid-template-columns: repeat(3, 1fr); }
+    .gpf-grid { grid-template-columns: 1fr 1fr; }
+  }
   @media (max-width: 700px) {
     .grid2, .grid3 { grid-template-columns: 1fr; }
     .summary-grid { grid-template-columns: 1fr 1fr; }
@@ -275,6 +287,44 @@
     </div>
   </div>
 
+  <hr class="section-divider" style="margin-top:18px">
+  <h2 style="margin-bottom:6px">💼 ข้อมูล กบข. ณ ปัจจุบัน</h2>
+  <div class="notice" style="margin-bottom:14px">กรอกยอดเงินสะสม กบข. ที่มีอยู่แล้ว — โปรแกรมจะนำไปสะสมต่อพร้อมดอกผลจนถึงวันเกษียณ (ถ้าไม่มีหรือยังไม่ได้สมัคร กรอก 0)</div>
+  <div class="grid3" style="margin-bottom:14px">
+    <div class="input-group">
+      <label>เงินสะสม (เงินต้น) ปัจจุบัน (บาท)</label>
+      <input type="number" id="gpfTon" placeholder="เช่น 150000" min="0" value="0">
+      <div class="hint">ส่วนที่ข้าราชการสะสม 3% ของเงินเดือน</div>
+    </div>
+    <div class="input-group">
+      <label>เงินสมทบ ปัจจุบัน (บาท)</label>
+      <input type="number" id="gpfSomtop" placeholder="เช่น 150000" min="0" value="0">
+      <div class="hint">ส่วนที่รัฐบาลสมทบ 3% ของเงินเดือน</div>
+    </div>
+    <div class="input-group">
+      <label>เงินชดเชย ปัจจุบัน (บาท)</label>
+      <input type="number" id="gpfChomdee" placeholder="เช่น 100000" min="0" value="0">
+      <div class="hint">ส่วนชดเชยที่รัฐบาลจ่ายให้ 2% ของเงินเดือน</div>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="input-group">
+      <label>เงินออมเพิ่ม (%) ต่อเดือน</label>
+      <input type="number" id="gpfExtra" placeholder="เช่น 2" min="0" max="12" step="0.5" value="0">
+      <div class="hint">ออมเพิ่มได้สูงสุด 12% ของเงินเดือน (ไม่บังคับ)</div>
+    </div>
+    <div class="input-group">
+      <label>ผลตอบแทนการลงทุน กบข. (% ต่อปี)</label>
+      <input type="number" id="gpfReturn" placeholder="เช่น 3" min="0" max="15" step="0.1" value="3">
+      <div class="hint">ผลตอบแทนเฉลี่ยย้อนหลัง กบข. ประมาณ 2–5% ต่อปี</div>
+    </div>
+    <div class="input-group">
+      <label>เงินออมเพิ่ม ปัจจุบัน (บาท)</label>
+      <input type="number" id="gpfExtraBalance" placeholder="เช่น 50000" min="0" value="0">
+      <div class="hint">ยอดออมเพิ่มที่สะสมไว้แล้ว (ถ้ามี)</div>
+    </div>
+  </div>
+
   <div style="margin-top:22px; text-align:center">
     <button class="btn" onclick="calculate()">🔢 คำนวณ</button>
     <button class="btn btn-reset" onclick="resetForm()">↺ รีเซ็ต</button>
@@ -299,6 +349,12 @@
   <div class="card">
     <h2>💰 ประมาณการบำเหน็จ / บำนาญ</h2>
     <div id="pensionDetail"></div>
+  </div>
+
+  <!-- GPF -->
+  <div class="card">
+    <h2>💼 ประมาณการ กบข. ณ วันเกษียณ</h2>
+    <div id="gpfDetail"></div>
   </div>
 
   <!-- Table -->
@@ -496,6 +552,15 @@ function calculate() {
   const retireAge  = parseFloat(document.getElementById('retirementAge').value);
   const pct        = parseFloat(document.getElementById('incrementPct').value) / 100;
 
+  // GPF inputs
+  const gpfTon0          = parseFloat(document.getElementById('gpfTon').value)          || 0;
+  const gpfSomtop0       = parseFloat(document.getElementById('gpfSomtop').value)       || 0;
+  const gpfChomdee0      = parseFloat(document.getElementById('gpfChomdee').value)      || 0;
+  const gpfExtraBal0     = parseFloat(document.getElementById('gpfExtraBalance').value) || 0;
+  const gpfExtraPct      = (parseFloat(document.getElementById('gpfExtra').value)       || 0) / 100;
+  const gpfAnnualReturn  = (parseFloat(document.getElementById('gpfReturn').value)      || 3)  / 100;
+  const gpfMonthlyReturn = gpfAnnualReturn / 12;
+
   // Validate
   const errors = [];
   if (!salary0 || salary0 < 1000) errors.push('กรุณาระบุเงินเดือนปัจจุบันที่ถูกต้อง');
@@ -553,6 +618,12 @@ function calculate() {
   let roundNo = 0;
   let appliedPromos = new Set();
 
+  // GPF running balances (แยกส่วน)
+  let gpfTon     = gpfTon0;
+  let gpfSomtop  = gpfSomtop0;
+  let gpfChomdee = gpfChomdee0;
+  let gpfExtra   = gpfExtraBal0;
+
   while (curAge < retireAge - 0.001) {
     roundNo++;
     const roundDate = `${simYear}-${simMonth === 4 ? '04' : '10'}-01`;
@@ -602,8 +673,20 @@ function calculate() {
       promo: promoNote
     });
 
-    // เก็บรายเดือน: แต่ละรอบ = 6 เดือน → push 6 ครั้ง
-    for (let m = 0; m < 6; m++) monthlyHistory.push(newSalary);
+    // เก็บรายเดือนและสะสม กบข. รายเดือน (แต่ละรอบ = 6 เดือน)
+    for (let m = 0; m < 6; m++) {
+      monthlyHistory.push(newSalary);
+      // ดอกผลทบต้นรายเดือน
+      gpfTon     *= (1 + gpfMonthlyReturn);
+      gpfSomtop  *= (1 + gpfMonthlyReturn);
+      gpfChomdee *= (1 + gpfMonthlyReturn);
+      gpfExtra   *= (1 + gpfMonthlyReturn);
+      // เงินสะสมรายเดือน
+      gpfTon     += newSalary * 0.03;
+      gpfSomtop  += newSalary * 0.03;
+      gpfChomdee += newSalary * 0.02;
+      gpfExtra   += newSalary * gpfExtraPct;
+    }
     curSalary = newSalary;
     curAge    = nextAge;
     curYos    = nextYos;
@@ -646,16 +729,26 @@ function calculate() {
   // บำเหน็จดำรงชีพ (bonus severance = 30x monthly pension, max 15M) for pension recipients
   const bonusSeverance = isPension ? pensionMonthly * 30 : null;
 
+  // GPF final totals
+  const gpfTotal = gpfTon + gpfSomtop + gpfChomdee + gpfExtra;
+  const gpfResult = {
+    ton: gpfTon, somtop: gpfSomtop, chomdee: gpfChomdee,
+    extra: gpfExtra, total: gpfTotal,
+    initTon: gpfTon0, initSomtop: gpfSomtop0, initChomdee: gpfChomdee0, initExtra: gpfExtraBal0,
+    extraPct: gpfExtraPct * 100, annualReturn: gpfAnnualReturn * 100
+  };
+
   // ── Render ───────────────────────────────────────────────
   document.getElementById('resultSection').classList.add('visible');
-  renderSummary(finalSalary, finalYos, yosRounded, isPension, pensionMonthly, severance);
+  renderSummary(finalSalary, finalYos, yosRounded, isPension, pensionMonthly, severance, gpfTotal);
   renderPension(isPension, finalSalary, yosRounded, avg60, pensionPct, pensionMonthly, severance, bonusSeverance, last60months.length);
+  renderGPF(gpfResult);
   renderTable(rows);
   renderChart(rows, salary0);
   window.scrollTo({ top: document.getElementById('resultSection').offsetTop - 20, behavior: 'smooth' });
 }
 
-function renderSummary(finalSalary, finalYos, yosR, isPension, pm, sev) {
+function renderSummary(finalSalary, finalYos, yosR, isPension, pm, sev, gpfTotal) {
   const container = document.getElementById('summaryCards');
   const items = [
     { label: 'เงินเดือนสุดท้าย', value: fmt(finalSalary) + ' บาท', sub: 'ณ วันเกษียณ', cls: 'card-blue' },
@@ -665,7 +758,8 @@ function renderSummary(finalSalary, finalYos, yosR, isPension, pm, sev) {
       : { label: 'บำเหน็จ', value: fmt(Math.round(sev)) + ' บาท', sub: 'ครั้งเดียว', cls: 'card-orange' },
     isPension
       ? { label: 'บำเหน็จดำรงชีพ', value: fmt(Math.round(pm * 30)) + ' บาท', sub: '30 เท่าของบำนาญ', cls: 'card-orange' }
-      : { label: 'ประเภท', value: 'บำเหน็จ', sub: 'อายุราชการ < 25 ปี', cls: 'card-orange' }
+      : { label: 'ประเภท', value: 'บำเหน็จ', sub: 'อายุราชการ < 25 ปี', cls: 'card-orange' },
+    { label: 'กบข. รวม ณ เกษียณ', value: fmt(Math.round(gpfTotal)) + ' บาท', sub: 'รวมดอกผลทบต้น', cls: 'card-teal' }
   ];
   container.innerHTML = items.map(it =>
     `<div class="sum-card ${it.cls}">
@@ -710,6 +804,47 @@ function renderPension(isPension, lastSal, yosR, avg60, pct, pm, sev, bonus, his
       </div>`;
   }
   box.innerHTML = detail;
+}
+
+function renderGPF(g) {
+  const box = document.getElementById('gpfDetail');
+  const hasExtra = g.extraPct > 0;
+  box.innerHTML = `
+    <div style="margin-bottom:10px;font-size:13px;color:#4a5568">
+      อัตราผลตอบแทนที่ใช้คำนวณ <strong>${fmtDec(g.annualReturn,1)}% ต่อปี</strong>
+      (ทบต้นรายเดือน) &nbsp;|&nbsp; ออมเพิ่ม <strong>${fmtDec(g.extraPct,1)}%</strong> ของเงินเดือน
+    </div>
+    <div class="gpf-grid">
+      <div class="gpf-part">
+        <div class="gp-label">💰 เงินสะสม (เงินต้น)</div>
+        <div class="gp-value">${fmt(Math.round(g.ton))} บาท</div>
+        <div style="font-size:11px;color:#718096;margin-top:3px">ข้าราชการสะสม 3%/เดือน</div>
+      </div>
+      <div class="gpf-part">
+        <div class="gp-label">🏛️ เงินสมทบ</div>
+        <div class="gp-value">${fmt(Math.round(g.somtop))} บาท</div>
+        <div style="font-size:11px;color:#718096;margin-top:3px">รัฐบาลสมทบ 3%/เดือน</div>
+      </div>
+      <div class="gpf-part">
+        <div class="gp-label">📋 เงินชดเชย</div>
+        <div class="gp-value">${fmt(Math.round(g.chomdee))} บาท</div>
+        <div style="font-size:11px;color:#718096;margin-top:3px">รัฐบาลชดเชย 2%/เดือน</div>
+      </div>
+      <div class="gpf-part" style="${!hasExtra ? 'opacity:0.45' : ''}">
+        <div class="gp-label">➕ เงินออมเพิ่ม</div>
+        <div class="gp-value">${fmt(Math.round(g.extra))} บาท</div>
+        <div style="font-size:11px;color:#718096;margin-top:3px">${hasExtra ? fmtDec(g.extraPct,1)+'%/เดือน' : 'ไม่ได้ออมเพิ่ม'}</div>
+      </div>
+    </div>
+    <div class="gpf-total-box">
+      <div>
+        <div class="gt-label">💼 กบข. รวมทั้งหมด ณ วันเกษียณ</div>
+        <div style="font-size:12px;opacity:0.8;margin-top:2px">
+          ยอดตั้งต้น: ${fmt(Math.round(g.initTon + g.initSomtop + g.initChomdee + g.initExtra))} บาท &nbsp;+&nbsp; สะสมใหม่ + ดอกผล
+        </div>
+      </div>
+      <div class="gt-value">${fmt(Math.round(g.total))} บาท</div>
+    </div>`;
 }
 
 function renderTable(rows) {
@@ -780,10 +915,11 @@ function renderChart(rows, startSalary) {
 }
 
 function resetForm() {
+  const defaults = { incrementPct: '3.5', retirementAge: '60', gpfReturn: '3',
+                     gpfTon: '0', gpfSomtop: '0', gpfChomdee: '0',
+                     gpfExtra: '0', gpfExtraBalance: '0' };
   document.querySelectorAll('input[type=number]').forEach(el => {
-    if (el.id === 'incrementPct') el.value = '3.5';
-    else if (el.id === 'retirementAge') el.value = '60';
-    else el.value = '';
+    el.value = defaults[el.id] !== undefined ? defaults[el.id] : '';
   });
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
   document.getElementById('startMonth').value = '12';
