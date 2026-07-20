@@ -573,7 +573,10 @@ function fmtDec(n, d=2) {
 // ============================================================
 // DATE HELPERS
 // ============================================================
-const TODAY = new Date(2026, 3, 7); // April 7, 2026
+// ใช้ "วันที่ปัจจุบัน" ในการคำนวณอายุ / อายุราชการ / รอบเลื่อนเงินเดือน
+// (normalize เป็นเที่ยงคืน เพื่อให้ผลคงที่ไม่ขึ้นกับเวลาในวัน)
+const TODAY = new Date();
+TODAY.setHours(0, 0, 0, 0);
 
 function calcYearsFromDate(dateStr) {
   if (!dateStr) return NaN;
@@ -593,6 +596,13 @@ function formatYears(y) {
 
 // Live display when dates change
 document.addEventListener('DOMContentLoaded', () => {
+  // จำกัดวันที่บรรจุไม่ให้เลือกเกิน "วันนี้" (เลื่อนตามวันปัจจุบันเสมอ)
+  const _apptEl = document.getElementById('appointmentDate');
+  if (_apptEl) {
+    const iso = `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}-${String(TODAY.getDate()).padStart(2,'0')}`;
+    _apptEl.max = iso;
+  }
+
   document.getElementById('birthDate').addEventListener('change', function() {
     const y = calcYearsFromDate(this.value);
     document.getElementById('ageDisplay').textContent = isNaN(y) ? 'ระบบจะคำนวณอายุให้อัตโนมัติ' : `อายุปัจจุบัน: ${formatYears(y)}`;
