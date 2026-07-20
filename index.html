@@ -594,6 +594,15 @@ function formatYears(y) {
   return mo > 0 ? `${yr} ปี ${mo} เดือน` : `${yr} ปี`;
 }
 
+// แปลงวันที่ ISO (YYYY-MM-DD) → รูปแบบ วัน/เดือน/ปี (DD/MM/YYYY)
+function toDMY(iso) {
+  if (!iso || iso === '-') return iso || '-';
+  const parts = String(iso).split('-');
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts;
+  return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+}
+
 // Live display when dates change
 document.addEventListener('DOMContentLoaded', () => {
   // จำกัดวันที่บรรจุไม่ให้เลือกเกิน "วันนี้" (เลื่อนตามวันปัจจุบันเสมอ)
@@ -975,7 +984,7 @@ function renderTable(rows) {
       : (r.capped ? `<td class="capped"><span class="tag tag-cap">⚠ ตัน</span></td>` : '<td>—</td>');
     return `<tr class="${rowClass}">
       <td>${r.no}</td>
-      <td>${r.date}</td>
+      <td>${toDMY(r.date)}</td>
       <td>${r.age}</td>
       <td>${r.yos}</td>
       <td>${r.level}</td>
@@ -989,7 +998,7 @@ function renderTable(rows) {
 }
 
 function renderChart(rows, startSalary) {
-  const labels = rows.map(r => r.date.substring(0, 7));
+  const labels = rows.map(r => { const [y, m] = r.date.split('-'); return `${m}/${y}`; });  // เดือน/ปี
   const data   = rows.map(r => r.salary);
 
   const ctx = document.getElementById('salaryChart').getContext('2d');
@@ -1094,7 +1103,7 @@ function showFeedbackList() {
       <strong>${e.name}</strong> — ${e.text}
       <div class="fb-meta">
         ⏰ ${e.ts} &nbsp;|&nbsp; เงินเดือน: ${e.salary} บ. &nbsp;|&nbsp; ระดับ: ${e.level}
-        &nbsp;|&nbsp; เกิด: ${e.birth} &nbsp;|&nbsp; บรรจุ: ${e.appt}
+        &nbsp;|&nbsp; เกิด: ${toDMY(e.birth)} &nbsp;|&nbsp; บรรจุ: ${toDMY(e.appt)}
       </div>
     </div>`).join('');
   content.innerHTML = `
