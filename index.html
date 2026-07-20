@@ -115,13 +115,13 @@
     </div>
     <div class="input-group">
       <label>วัน/เดือน/ปี เกิด</label>
-      <input type="date" id="birthDate" max="2008-12-31">
-      <div class="hint" id="ageDisplay">ระบบจะคำนวณอายุให้อัตโนมัติ</div>
+      <input type="text" id="birthDate" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป (เช่น 15/03/2530)">
+      <div class="hint" id="ageDisplay">กรอกเป็น วัน/เดือน/ปี (พ.ศ. หรือ ค.ศ. ก็ได้)</div>
     </div>
     <div class="input-group">
       <label>วัน/เดือน/ปี ที่บรรจุ</label>
-      <input type="date" id="appointmentDate" max="2026-04-07">
-      <div class="hint" id="yosDisplay">ระบบจะคำนวณอายุราชการให้อัตโนมัติ</div>
+      <input type="text" id="appointmentDate" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="วว/ดด/ปปปป (เช่น 01/10/2558)">
+      <div class="hint" id="yosDisplay">กรอกเป็น วัน/เดือน/ปี (พ.ศ. หรือ ค.ศ. ก็ได้)</div>
     </div>
   </div>
   <div class="grid2" style="margin-top:14px">
@@ -578,12 +578,24 @@ function fmtDec(n, d=2) {
 const TODAY = new Date();
 TODAY.setHours(0, 0, 0, 0);
 
+// แปลงข้อความ วัน/เดือน/ปี (dd/mm/yyyy) → Date  (null ถ้ารูปแบบไม่ถูกต้อง)
+// รองรับทั้ง พ.ศ. และ ค.ศ. อัตโนมัติ (ปี ≥ 2400 ถือเป็น พ.ศ. แล้วลบ 543)
+function parseDMY(str) {
+  if (!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{3,4})$/);
+  if (!m) return null;
+  let d = +m[1], mo = +m[2], y = +m[3];
+  if (y >= 2400) y -= 543;
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, mo - 1, d);
+  // ตรวจว่าเป็นวันที่จริง (กัน 31/02 เป็นต้น)
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return dt;
+}
+
 function calcYearsFromDate(dateStr) {
-  if (!dateStr) return NaN;
-  const d = new Date(dateStr);
-  let years = TODAY.getFullYear() - d.getFullYear();
-  const m = TODAY.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && TODAY.getDate() < d.getDate())) years--;
+  const d = parseDMY(dateStr);
+  if (!d) return NaN;
   const msPerYear = 365.25 * 24 * 3600 * 1000;
   return (TODAY - d) / msPerYear;
 }
@@ -604,22 +616,26 @@ function toDMY(iso) {
 }
 
 // Live display when dates change
-document.addEventListener('DOMContentLoaded', () => {
-  // จำกัดวันที่บรรจุไม่ให้เลือกเกิน "วันนี้" (เลื่อนตามวันปัจจุบันเสมอ)
-  const _apptEl = document.getElementById('appointmentDate');
-  if (_apptEl) {
-    const iso = `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}-${String(TODAY.getDate()).padStart(2,'0')}`;
-    _apptEl.max = iso;
-  }
+// ตั้งช่องกรอกวันที่แบบ dd/mm/yyyy: ใส่ "/" อัตโนมัติ + โชว์อายุสด
+function setupDMYInput(id, hintId, calcLabel, emptyLabel) {
+  const el = document.getElementById(id);
+  const hint = document.getElementById(hintId);
+  if (!el || !hint) return;
+  el.addEventListener('input', function() {
+    // เก็บเฉพาะตัวเลข 8 หลัก แล้วจัดกลุ่มเป็น dd/mm/yyyy
+    const digits = this.value.replace(/\D/g, '').slice(0, 8);
+    let out = digits;
+    if (digits.length > 4)      out = digits.slice(0,2) + '/' + digits.slice(2,4) + '/' + digits.slice(4);
+    else if (digits.length > 2) out = digits.slice(0,2) + '/' + digits.slice(2);
+    this.value = out;
+    const y = calcYearsFromDate(this.value);
+    hint.textContent = isNaN(y) ? emptyLabel : `${calcLabel}: ${formatYears(y)}`;
+  });
+}
 
-  document.getElementById('birthDate').addEventListener('change', function() {
-    const y = calcYearsFromDate(this.value);
-    document.getElementById('ageDisplay').textContent = isNaN(y) ? 'ระบบจะคำนวณอายุให้อัตโนมัติ' : `อายุปัจจุบัน: ${formatYears(y)}`;
-  });
-  document.getElementById('appointmentDate').addEventListener('change', function() {
-    const y = calcYearsFromDate(this.value);
-    document.getElementById('yosDisplay').textContent = isNaN(y) ? 'ระบบจะคำนวณอายุราชการให้อัตโนมัติ' : `อายุราชการ: ${formatYears(y)}`;
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  setupDMYInput('birthDate', 'ageDisplay', 'อายุปัจจุบัน', 'กรอกเป็น วัน/เดือน/ปี (พ.ศ. หรือ ค.ศ. ก็ได้)');
+  setupDMYInput('appointmentDate', 'yosDisplay', 'อายุราชการ', 'กรอกเป็น วัน/เดือน/ปี (พ.ศ. หรือ ค.ศ. ก็ได้)');
 });
 
 // ============================================================
@@ -690,8 +706,10 @@ function calculate() {
 
   let curSalary = salary0;
   let curLevel  = level0;
-  let curAge    = age0 + ((simMonth === 4 ? 4 : 10) - (TODAY.getMonth() + 1)) / 12;
-  let curYos    = yos0 + ((simMonth === 4 ? 4 : 10) - (TODAY.getMonth() + 1)) / 12;
+  // จำนวนเดือนจากวันนี้ถึงรอบเลื่อนเงินเดือนรอบแรก (คิดข้ามปีถูกต้อง — เดิมติดลบเมื่อวันนี้อยู่ ต.ค.–ธ.ค.)
+  const monthsToFirst = (simYear - TODAY.getFullYear()) * 12 + (simMonth - (TODAY.getMonth() + 1));
+  let curAge    = age0 + monthsToFirst / 12;
+  let curYos    = yos0 + monthsToFirst / 12;
 
   const rows = [];
   const monthlyHistory = []; // เก็บรายเดือน เพื่อเฉลี่ย 60 เดือนสุดท้าย
